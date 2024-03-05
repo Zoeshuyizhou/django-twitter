@@ -37,7 +37,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    #third party
     'rest_framework',
+    'debug_toolbar',
+    # project apps
+    'accounts',
 ]
 
 REST_FRAMEWORK = {
@@ -53,6 +57,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # include the debug toolbar middleware as early as possible
+    # but must come after any other middlewares that encodes the response content
+    # such as 'GZipMiddleware'
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    # ......
 ]
 
 ROOT_URLCONF = 'twitter.urls'
@@ -124,7 +133,7 @@ USE_L10N = True
 
 USE_TZ = True
 
-
+INTERNAL_IPS = ['10.0.2.2']
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
