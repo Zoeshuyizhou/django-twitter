@@ -39,8 +39,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     #third party
     'rest_framework',
-    # project apps
+
     'accounts',
+    'tweets',
+
 ]
 
 REST_FRAMEWORK = {
