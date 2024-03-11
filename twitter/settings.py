@@ -37,9 +37,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    #third party
     'rest_framework',
+
     'accounts',
     'tweets',
+
 ]
 
 REST_FRAMEWORK = {
