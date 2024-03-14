@@ -12,6 +12,9 @@ from django.contrib.auth.models import User
 
 
 class FriendshipViewSet(viewsets.GenericViewSet):
+
+    serializer_class = FriendshipSerializerForCreate
+
     # 我们希望 POST /api/friendship/1/follow 是去 follow user_id=1 的用户
     # 因此这里 queryset 需要是 User.objects.all()
     # 如果是 Friendship.objects.all 的话就会出现 404 Not Found
@@ -36,7 +39,10 @@ class FriendshipViewSet(viewsets.GenericViewSet):
             status=status.HTTP_200_OK,
         )
     @action(methods=['POST'], detail=True, permission_classes=[IsAuthenticated])
-    def follow(self, request, pk):
+
+        # raise 404 if no user with id=pk
+        self.get_object()
+
         # 特殊判断重复 follow 的情况（比如前端猛点好多少次 follow)
         # 静默处理，不报错，因为这类重复操作因为网络延迟的原因会比较多，没必要当做错误处理
         if Friendship.objects.filter(from_user=request.user, to_user=pk).exists():
@@ -57,6 +63,10 @@ class FriendshipViewSet(viewsets.GenericViewSet):
         return Response({'success': True}, status=status.HTTP_201_CREATED)
     @action(methods=['POST'], detail=True, permission_classes=[IsAuthenticated])
     def unfollow(self, request, pk):
+
+        #raise 404 if no user with id=pk
+        self.get_object()
+
         # 注意 pk 的类型是 str，所以要做类型转换
         # 如果取关的人是自己 那么返回状态码400
         if request.user.id == int(pk):
@@ -75,4 +85,9 @@ class FriendshipViewSet(viewsets.GenericViewSet):
             from_user=request.user,
             to_user=pk,
         ).delete()
+
         return Response({'success': True, 'deleted': deleted})
+
+    def list(self, request):
+        return Response({"this is friendship homepage"})
+
