@@ -39,9 +39,9 @@ class FriendshipViewSet(viewsets.GenericViewSet):
             status=status.HTTP_200_OK,
         )
     @action(methods=['POST'], detail=True, permission_classes=[IsAuthenticated])
-
+    def follow(self, request, pk):
         # raise 404 if no user with id=pk
-        self.get_object()
+        #self.get_object()
 
         # 特殊判断重复 follow 的情况（比如前端猛点好多少次 follow)
         # 静默处理，不报错，因为这类重复操作因为网络延迟的原因会比较多，没必要当做错误处理
@@ -65,7 +65,7 @@ class FriendshipViewSet(viewsets.GenericViewSet):
     def unfollow(self, request, pk):
 
         #raise 404 if no user with id=pk
-        self.get_object()
+        #self.get_object()
 
         # 注意 pk 的类型是 str，所以要做类型转换
         # 如果取关的人是自己 那么返回状态码400
