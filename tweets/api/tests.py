@@ -68,6 +68,7 @@ class TweetApiTests(TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data['user']['id'], self.user1.id)
         self.assertEqual(Tweet.objects.count(), tweets_count + 1)
+
     def test_retrieve(self):
         # tweet with id=-1 does not exist
         url = TWEET_RETRIEVE_API.format(-1)
