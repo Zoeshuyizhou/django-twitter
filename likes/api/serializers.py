@@ -9,7 +9,7 @@ from tweets.models import Tweet
 
 class LikeSerializer(serializers.ModelSerializer):
     user = UserSerializer()
-
+    #因为获得点赞信息的时候往往是基于comment/tweet 已经有content_type, object_id了 所以不需要更多了
     class Meta:
         model = Like
         fields = ('user', 'created_at')
