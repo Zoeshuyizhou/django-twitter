@@ -9,7 +9,7 @@ COMMENT_URL = '/api/comments/'
 class CommentApiTests(TestCase):
 
     def setUp(self):
-        self.anonymous_client = APIClient()
+        #self.anonymous_client = APIClient()
         
         self.linghu = self.create_user('linghu')
         self.linghu_client = APIClient()
