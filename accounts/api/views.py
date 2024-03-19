@@ -50,6 +50,8 @@ class AccountViewSet(viewsets.ViewSet):
                 'errors': serializer.errors,
             }, status=400)
         user = serializer.save()
+
+
         #注册之后再login一下
         django_login(request, user)
         return Response({
