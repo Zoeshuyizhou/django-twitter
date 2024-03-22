@@ -18,13 +18,15 @@ from django.contrib import admin
 from django.urls import include, path
 from rest_framework import routers
 #from accounts.api import views
-from accounts.api.views import UserViewSet, AccountViewSet
+from accounts.api.views import UserViewSet, AccountViewSet, UserProfileViewSet
 from tweets.api.views import TweetViewSet
 from friendships.api.views import FriendshipViewSet
 from newsfeeds.api.views import NewsFeedViewSet
 from comments.api.views import CommentViewSet
 from likes.api.views import LikeViewSet
 from inbox.api.views import NotificationViewSet
+
+#import debug_toolbar
 
 router = routers.DefaultRouter()
 router.register(r'api/users', UserViewSet)
@@ -36,9 +38,11 @@ router.register(r'api/newsfeeds', NewsFeedViewSet, basename='newsfeed')
 router.register(r'api/comments', CommentViewSet, basename='comments')
 router.register(r'api/likes', LikeViewSet, basename='likes')
 router.register(r'api/notifications', NotificationViewSet, basename='notifications')
+router.register(r'api/profiles', UserProfileViewSet, basename='profiles')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+
 ]
