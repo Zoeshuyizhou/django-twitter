@@ -1,5 +1,5 @@
-from friendships.models import Friendship
 from friendships.api.paginations import FriendshipPagination
+from friendships.models import Friendship
 from rest_framework.test import APIClient
 from testing.testcases import TestCase
 
@@ -13,6 +13,8 @@ FOLLOWINGS_URL = '/api/friendships/{}/followings/'
 class FriendshipApiTests(TestCase):
 
     def setUp(self):
+
+        self.clear_cache()
         #self.anonymous_client = APIClient()
 
         self.linghu = self.create_user('linghu')
