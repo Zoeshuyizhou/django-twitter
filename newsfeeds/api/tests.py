@@ -13,6 +13,7 @@ FOLLOW_URL = '/api/friendships/{}/follow/'
 class NewsFeedApiTests(TestCase):
 
     def setUp(self):
+        self.clear_cache()
         #self.anonymous_client = APIClient()
 
         self.linghu = self.create_user('linghu')
@@ -111,3 +112,30 @@ class NewsFeedApiTests(TestCase):
         self.assertEqual(response.data['has_next_page'], False)
         self.assertEqual(len(response.data['results']), 1)
         self.assertEqual(response.data['results'][0]['id'], new_newsfeed.id)
+
+    def test_user_cache(self):
+        profile = self.dongxie.profile
+        profile.nickname = 'huanglaoxie'
+        profile.save()
+        #newsfeed -> tweet -> user -> userprofile 测试这一整条是通的 userprofile改了会在newsfeed里反映出来且cache不影响结果
+        self.assertEqual(self.linghu.username, 'linghu')
+        self.create_newsfeed(self.dongxie, self.create_tweet(self.linghu))
+        self.create_newsfeed(self.dongxie, self.create_tweet(self.dongxie))
+
+        response = self.dongxie_client.get(NEWSFEEDS_URL)
+        results = response.data['results']
+        self.assertEqual(results[0]['tweet']['user']['username'], 'dongxie')
+        #print(results)
+        self.assertEqual(results[0]['tweet']['user']['nickname'], 'huanglaoxie')
+        self.assertEqual(results[1]['tweet']['user']['username'], 'linghu')
+
+        self.linghu.username = 'linghuchong'
+        self.linghu.save()
+        profile.nickname = 'huangyaoshi'
+        profile.save()
+
+        response = self.dongxie_client.get(NEWSFEEDS_URL)
+        results = response.data['results']
+        self.assertEqual(results[0]['tweet']['user']['username'], 'dongxie')
+        self.assertEqual(results[0]['tweet']['user']['nickname'], 'huangyaoshi')
+        self.assertEqual(results[1]['tweet']['user']['username'], 'linghuchong')
