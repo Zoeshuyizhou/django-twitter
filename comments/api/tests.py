@@ -12,6 +12,7 @@ NEWSFEED_LIST_API = '/api/newsfeeds/'
 class CommentApiTests(TestCase):
 
     def setUp(self):
+        self.clear_cache()
         #self.anonymous_client = APIClient()
         
         self.linghu = self.create_user('linghu')
@@ -57,7 +58,6 @@ class CommentApiTests(TestCase):
         self.assertEqual(response.data['user']['id'], self.linghu.id)
         self.assertEqual(response.data['tweet_id'], self.tweet.id)
         self.assertEqual(response.data['content'], '1')
-
 
     def test_destroy(self):
         comment = self.create_comment(self.linghu, self.tweet)
