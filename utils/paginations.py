@@ -1,5 +1,13 @@
+from dateutil import parser
 from rest_framework.pagination import BasePagination
 from rest_framework.response import Response
+
+# user_i=1
+# 在redis cache里存的是 1 -> [(100, 'hello', 'timestamp1'),(99, 'world', 'timestamp2')]
+# 如果用户修改了tweet 就会跟db不一致
+# 一个解决方案，只把tweetid传进去redis cache， 再通过memcache 用tweetid取出对应的tweet
+# [10,9,8,7]
+# cache.get_many([...])  然后对于漏掉的没在cache里的再用 Tweets.object.filter(id__in=[8,7])
 
 
 class EndlessPagination(BasePagination):
@@ -12,7 +20,42 @@ class EndlessPagination(BasePagination):
     def to_html(self):
         pass
 
+    def paginate_ordered_list(self, reverse_ordered_list, request):
+        # queryset是倒叙的 大的数据（created at数大 新更新的）在前面 小的数据（created at小，旧数据）在后面
+        # 向下拉刷新取新更新的data
+        # 把 2021-11-11 00:00:01.123432 转换成iso format
+        if 'created_at__gt' in request.query_params:
+            created_at__gt = parser.isoparse(request.query_params['created_at__gt'])
+            objects = []
+            for obj in reverse_ordered_list:
+                if obj.created_at > created_at__gt:
+                    objects.append(obj)
+                else:
+                    break
+            self.has_next_page = False
+            return objects
+
+        # 向上拉取旧data
+        index = 0
+        if 'created_at__lt' in request.query_params:
+            created_at__lt = parser.isoparse(request.query_params['created_at__lt'])
+            for index, obj in enumerate(reverse_ordered_list):
+                # 小于created_at__lt timestamp的就全都满足条件了
+                if obj.created_at < created_at__lt:
+                    break
+            # else对应for 意思是如果没有产生break就会进入else 如果产生break就会跳过else
+            else:
+                # 没找到任何满足条件的 objects, 返回空数组
+                # 注意这个 else 对应的是 for，参见 python 的 for else 语法
+                reverse_ordered_list = []
+        self.has_next_page = len(reverse_ordered_list) > index + self.page_size
+        return reverse_ordered_list[index: index + self.page_size]
+
     def paginate_queryset(self, queryset, request, view=None):
+        # cache里return回来的会是一个ordered list 不是queryset了
+        if type(queryset) == list:
+            return self.paginate_ordered_list(queryset, request)
+
         if 'created_at__gt' in request.query_params:
             # created_at__gt 用于下拉刷新的时候加载最新的内容进来
             # 为了简便起见，下拉刷新不做翻页机制，直接加载所有更新的数据

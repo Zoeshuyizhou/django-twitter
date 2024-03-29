@@ -6,6 +6,7 @@ from tweets.api.serializers import (TweetSerializer,
                                     TweetSerializerForDetail,
                                     )
 from tweets.models import Tweet
+from tweets.services import TweetService
 from newsfeeds.services import NewsFeedService
 from utils.decorators import required_params
 from utils.paginations import EndlessPagination
@@ -15,7 +16,7 @@ class TweetViewSet(viewsets.GenericViewSet):
     """
     API endpoint that allows users to create, list tweets
     """
-    queryset = Tweet.objects.all()  #有了这个 get_object才不会出错
+    queryset = Tweet.objects.all()  # 有了这个 get_object才不会出错
     serializer_class = TweetSerializerForCreate
     pagination_class = EndlessPagination
 
@@ -25,13 +26,13 @@ class TweetViewSet(viewsets.GenericViewSet):
         return [IsAuthenticated()]
 
     @required_params(params = ['user_id'])
-#http://localhost/api/tweets/?user_id=1
+    # http://localhost/api/tweets/?user_id=1
     def list(self, request, *args, **kwargs):
         """
         重载 list 方法，不列出所有 tweets，必须要求指定 user_id 作为筛选条件
         """
-        #if 'user_id' not in request.query_params:
-            #return Response('missing user_id', status=400)
+        # if 'user_id' not in request.query_params:
+            # return Response('missing user_id', status=400)
 
         # 这句查询会被翻译为
         # select * from twitter_tweets
@@ -39,9 +40,14 @@ class TweetViewSet(viewsets.GenericViewSet):
         # order by created_at desc
         # 这句 SQL 查询会用到 user 和 created_at 的联合索引
         # 单纯的 user 索引是不够的
+        '''
         tweets = Tweet.objects.filter(
             user_id=request.query_params['user_id']
         ).order_by('-created_at')
+        '''
+        user_id = request.query_params['user_id']
+        tweets = TweetService.get_cached_tweets(user_id=user_id)
+
         tweets = self.paginate_queryset(tweets)
         serializer = TweetSerializer(
             tweets,
