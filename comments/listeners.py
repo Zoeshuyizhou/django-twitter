@@ -1,6 +1,7 @@
 from utils.listeners import invalidate_object_cache
 from utils.redis_helper import RedisHelper
 
+
 def incr_comments_count(sender, instance, created, **kwargs):
     from tweets.models import Tweet
     from django.db.models import F
