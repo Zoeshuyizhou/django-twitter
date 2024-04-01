@@ -10,6 +10,9 @@ class NewsFeedViewSet(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
     pagination_class = EndlessPagination
 
+    def get_queryset(self):
+        return NewsFeed.objects.filter(user = self.request.user)
+    
     def list(self, request):
         # 自定义 queryset，因为 newsfeed 的查看是有权限的
         # 只能看 user=当前登录用户的 newsfeed
