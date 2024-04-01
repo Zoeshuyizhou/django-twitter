@@ -1,12 +1,13 @@
 from accounts.api.serializers import UserSerializerForTweet
-from rest_framework import serializers
-from tweets.models import Tweet
 from comments.api.serializers import CommentSerializer
 from likes.api.serializers import LikeSerializer
 from likes.services import LikeService
-from tweets.constants import TWEET_PHOTOS_UPLOAD_LIMIT
+from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from tweets.constants import TWEET_PHOTOS_UPLOAD_LIMIT
+from tweets.models import Tweet
 from tweets.services import TweetService
+from utils.redis_helper import RedisHelper
 
 
 class TweetSerializer(serializers.ModelSerializer):
@@ -28,10 +29,14 @@ class TweetSerializer(serializers.ModelSerializer):
                   'photo_urls')
 
     def get_likes_count(self,obj):
-        return obj.like_set.count()
+        # select count(*) -> redis get
+        # N+1 queries
+        # N 如果是db queries -> 不行
+        # N 如果是memcached or redis query -> 可以
+        return RedisHelper.get_count(obj, 'likes_count')
 
     def get_comments_count(self,obj):
-        return obj.comment_set.count()
+        return RedisHelper.get_count(obj, 'comments_count')
 
     def get_has_liked(self, obj):
         return LikeService.has_liked(self.context['request'].user, obj)
