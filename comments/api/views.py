@@ -10,6 +10,9 @@ from comments.api.serializers import (
 from utils.permissions import IsObjectOwner
 from inbox.services import NotificationService
 from utils.decorators import required_params
+from ratelimit.decorators import ratelimit
+from django.utils.decorators import method_decorator
+
 
 class CommentViewSet(viewsets.GenericViewSet):
     """
@@ -30,7 +33,8 @@ class CommentViewSet(viewsets.GenericViewSet):
         return [AllowAny()]
 
     @required_params(params=['tweet_id'])
-    #http://localhost/api/comments/?tweet_id=1 要这么写
+    # http://localhost/api/comments/?tweet_id=1 要这么写
+    @method_decorator(ratelimit(key='user', rate='3/m', method='GET', block=True))
     def list(self, request, *args, **kwargs):
         '''
                 if 'tweet_id' not in request.query_params:
