@@ -29,9 +29,10 @@ class HBaseModel:
 
     @classmethod
     def get_field_hash(cls):
+        # 把__dict__这种attribute变成了一个hashmap
         field_hash = {}
         for field in cls.__dict__:
-            field_obj = getattr(cls, field)
+            field_obj = getattr(cls, field)  ## 等同于cls.__dict__[field]
             if isinstance(field_obj, HBaseField):
                 field_hash[field] = field_obj
         return field_hash
@@ -39,7 +40,7 @@ class HBaseModel:
     def __init__(self, **kwargs):
         for key, field in self.get_field_hash().items():
             value = kwargs.get(key)
-            setattr(self, key, value)
+            setattr(self, key, value)  #self.key = value
 
     @classmethod
     def init_from_row(cls, row_key, row_data):
@@ -64,8 +65,12 @@ class HBaseModel:
         field_hash = cls.get_field_hash()
         values = []
         for key, field in field_hash.items():
+            # # field.column_family 指的是它有指定列族
+            # 相当于如果没有指定列族，这个字段可能是行键的一部分
+            # 通过这个filter出来了row key, 所以下面的code是在对row key做serialize
             if field.column_family:
                 continue
+            # value 得到的是key的内容 比如 key是userid，value就是具体的id数值
             value = data.get(key)
             if value is None:
                 raise BadRowKeyError(f"{key} is missing in row key")
@@ -81,9 +86,11 @@ class HBaseModel:
         "val1" => {'key1': val1, 'key2': None, 'key3': None}
         "val1:val2" => {'key1': val1, 'key2': val2, 'key3': None}
         "val1:val2:val3" => {'key1': val1, 'key2': val2, 'key3': val3}
+        eg. userid:createdate  row_key = b'0000...1': '20200304012345'
         """
         data = {}
         if isinstance(row_key, bytes):
+            # bytes -> str
             row_key = row_key.decode('utf-8')
 
         # val1:val2 => val1:val2: 方便每次 find(':') 都能找到一个 val
@@ -123,6 +130,8 @@ class HBaseModel:
         row_data = {}
         field_hash = cls.get_field_hash()
         for key, field in field_hash.items():
+            # 这句话是说，如果没有指定的column family（指它是row key）那就跳过
+            # 所以这段代码是对row data在做serialization
             if not field.column_family:
                 continue
             column_key = '{}:{}'.format(field.column_family, key)
@@ -133,6 +142,21 @@ class HBaseModel:
         return row_data
 
     def save(self):
+        """
+        把一个self.__dict
+        user = UserModel(user_id=1, username="alice", age=30)
+        user.__dict__ = {
+                        'user_id': 1,
+                        'username': 'alice',
+                        'age': 30,
+                        }`
+        转换成了
+        Row Key: b"0000000001"
+        Column Family: info
+            Column: info:username, Value: alice
+            Column: info:age, Value: 30
+        """
+
         row_data = self.serialize_row_data(self.__dict__)
         # 如果 row_data 为空，即没有任何 column key values 需要存储 hbase 会直接不存储
         # 这个 row_key, 因此我们可以 raise 一个 exception 提醒调用者，避免存储空值
